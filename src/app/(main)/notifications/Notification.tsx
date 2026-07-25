@@ -1,5 +1,6 @@
 import { UserAvatar } from "@/components/UserAvatar";
-import { NotificationType } from "@/generated/prisma/enums";
+import { NotificationType } from "@/generated/prisma";
+// import { NotificationType } from "@/generated/prisma/enums";
 import { NotificationData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { Heart, MessageCircle, User2 } from "lucide-react";

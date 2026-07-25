@@ -31,7 +31,12 @@ const nextConfig: NextConfig = {
         destination: "/search?q=%23:tag"
       }
     ]
-  }
+  },
+
+
+  outputFileTracingIncludes: {
+    "/*": ["./src/generated/prisma/**/*"],
+  },
 };
 
 export default nextConfig;

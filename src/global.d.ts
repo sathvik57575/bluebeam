@@ -1,0 +1,2 @@
+declare module "*.css"
+//just creating a module declaration for css files so that TypeScript doesn't throw an error when we import css files in our components. This is a common practice when using CSS modules or any CSS file in a TypeScript project. By declaring a module for "*.css", we are telling TypeScript that whenever it encounters an import statement for a css file, it should treat it as a module and not throw an error. This allows us to import css files without any issues and use the styles defined in them in our components.

@@ -1,0 +1,20 @@
+.tiptap p.is-editor-empty:first-child::before {
+  color: var(--color-muted-foreground);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+.tiptap.ProseMirror {
+  outline: none;
+}
+
+/* just copy pasted this whole code from tiptap docs, but just used our own tailwind class as the color for the placeholder
+
+also initally we were using tailwind v3 where we did 
+color: theme("colors.muted-foreground") but since we updated to tailwind v4, we have to use the css variable instead, which is what we are doing now with var(--color-muted-foreground)
+The issue is theme("colors.muted.foreground") — this is a Tailwind v3 CSS-in-JS function that doesn't work in Tailwind v4.
+In Tailwind v4, colors are CSS variables, so you reference them directly. In Tailwind v3, theme() function resolved colors at build time. In Tailwind v4, everything is CSS variables so you just use var() directly.
+So now this makes my placeholder gray instead of not applying any color at all, which is what was happening before.
+*/

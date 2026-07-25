@@ -1,0 +1,298 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  previewFeatures = ["fullTextSearchPostgres"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING")
+}
+
+// creating tables
+model User {
+  id           String  @id
+  username     String  @unique
+  displayName  String
+  email        String? @unique
+  passwordHash String?
+  googleId     String? @unique
+  avatarUrl    String?
+  bio          String?
+
+  sessions Session[]
+
+  posts Post[] //we need to add this to create a relation between User and Post models. This means 1 user can have many posts. This creates a one-to-many relationship between User and Post just like sessions
+
+  following Follow[] @relation("following") //all the users that this user is following
+  followers Follow[] @relation("followers") //all the users that are following this user
+
+  likes Like[]
+
+  bookmarks Bookmark[]
+
+  comments Comment[]
+
+  receivedNotifications Notification[] @relation("Recipient")
+  issuedNotifications   Notification[] @relation("Issuer")
+
+  createdAt DateTime @default(now())
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+/**
+ * model User {
+ * Defines a database table called User in Prisma’s schema.
+ * Each row represents one registered user.
+
+ * id String @id
+ * String → column type
+ * @id → marks it as the primary key
+ * This uniquely identifies each user.
+
+ * username String @unique
+ * Creates a username column.
+ * • must be unique
+ * • no two users can share the same username, Database enforces this constraint.
+
+ * displayName String
+ * The name shown publicly. Allows users to change how they appear without changing their username.
+
+ * email String? @unique
+ * • String? → optional field (nullable)
+ * • @unique → must be unique if present
+ * Optional because some users might sign up using OAuth instead of email/password.
+ * Example:
+ * email: "user@example.com"
+ * or
+ * email: null
+ 
+ * passwordHash String?
+ * Stores the hashed password.
+ * Important: it does not store the real password.
+ * Example stored value:
+ * $argon2id$v=19$m=65536,t=3,p=4$...
+ * Nullable because OAuth users may not have a password.
+
+ * googleId String? @unique
+ * Used when users log in with Google OAuth.
+ * Example:
+ * googleId: "114827382948293"
+ * Nullable because:
+ * • password users won’t have this, Google users will
+
+ * avatarUrl String?
+ * Stores the profile image URL.
+ * Example:
+ * https://cdn.example.com/avatar123.png
+ * Optional because users might not upload an avatar.
+
+ * sessions Session[]
+ * Defines a relation between User and Session.
+ * Meaning: 1 User → many Sessions
+ * A user may have multiple active sessions.
+ * User logged in on:
+ * • laptop
+ * • phone
+ * • tablet
+ * Each device creates a session.
+
+ * createdAt DateTime @default(now())
+ * Creates a timestamp column.
+ * • DateTime → timestamp type
+ * • @default(now()) → automatically set when row is created
+ * Example stored value:
+ * 2026-03-09T10:23:11Z
+ * Useful for analytics and sorting users.
+
+ * @@map("users")
+ * Maps this Prisma model to a database table called users.
+ * Without this, Prisma would create "User" in DB
+ * With this: it creates with the name "users"
+ * Lowercase table naming is common in SQL databases.
+ * SO this renames the table to "users" instead of "User" in the database. But the model in Prisma remains "User" for use in our application code.
+
+ 
+ * Next in Session model we did this
+ * model Session {
+ * id        String   @id
+ * userId    String (acts as a foreign key to User.id)
+ * expiresAt DateTime
+ * }
+ * So here userId column stores the id of the user who owns the session. This creates a link between the Session and User tables.
+ * As soon as we format the code, the following code is added in the Session model(by prisma vscode extension)
+ * User      User     @relation(fields: [userId], references: [id])
+ * This is added by the Prisma extentsion in the VScode, but we can add this manually too.
+ * This line defines a relation between the Session and User models.
+ * • User → field name
+ * • User → related model
+ * • fields: [userId] → foreign key column in the Session table
+ * • references: [id] → points to User.id
+ * This is the sample table structure that would be created in DB based on the above schema.
+ * users Table
+ * The id here acts as the Primary Key (PK).
+ * id	      username	  displayName	email	    googleId	  createdAt
+ * user_01	  tech_guru	  Alex River	a@a.com	  NULL	      2024-05-01
+ * user_02	  sam_codes	  Sam Smith	  b@b.com	  g-98765	    2024-05-10
+ * (we didn't add password column but we understand)
+ * sessions Table
+ * The userId column is the Foreign Key (FK). It points back to the id in the users table.
+ * id	              userId(foriegn key)	      expiresAt
+ * session_aaa	      user_01	                  2024-06-01 10:00
+ * session_bbb	      user_01	                  2024-06-05 14:30
+ * session_ccc	      user_02	                  2024-06-01 09:00
+ * Also we are adding this at the last onDelete: Cascade
+ * So it becomes
+ * User      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+ * tHIS MEANS If a user is deleted deletes all their sessions too automatically.
+ * delete user
+ * ↓
+ * delete all their sessions automatically
+ * This Prevents orphan session records.
+ * next we do "npx prisma db push" to apply the schema changes to the database. This creates the users and sessions tables with the defined columns and relationships. Explained the differences between "npx prisma db push" and "npx prisma migrate dev" and "npx prisma generate" in the info.txt file
+ */
+
+//creating a table for posts
+model Post {
+  id      String @id @default(cuid())
+  content String
+  userId  String
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  attachments    Media[]
+
+  likes Like[]
+
+  bookmarks Bookmark[]
+
+  comments Comment[]
+
+  linkedNotifications Notification[]
+
+  createdAt DateTime @default(now())
+
+  @@map("posts")
+}
+
+//creating a Media table
+//post and media are in a one to many relationship
+model Media {
+  id     String  @id @default(cuid())
+
+  postId String? //this is optional and postId can be null since a media can or cannot be attached to a post
+
+  post Post? @relation(fields: [postId], references: [id], onDelete: SetNull) //since postId is optional even the relation should be optional, also SetNull means if a post is deleted, the media row doesn't get deleted with it. postId just becomes null. This lets you clean up orphaned media separately if needed. I'll understand this once I build our model.
+
+  type MediaType //type of enum, creating it below this model
+
+  url String
+
+  createdAt DateTime @default(now())
+
+  @@map("post_media")
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+//many to many self referential relationship for followers and following
+model Follow {
+  followerId  String //user who is following(who is clicking the follow button)
+  follower    User   @relation("following", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String //user who is being followed
+  following   User   @relation("followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId]) //to prevent duplicate follows
+  @@map("follows")
+}
+
+
+
+model Like {
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId String
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@map("likes")
+}
+
+
+model Bookmark {
+  id String @id @default(cuid())
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId String
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+  @@map("bookmarks")
+}
+
+model Comment {
+  id String @id @default(cuid())
+  content String
+
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId String
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@map("comments")
+}
+
+
+model Notification {
+  id String @id @default(cuid())
+
+  recipientId String
+  recipient User @relation("Recipient",fields: [recipientId], references: [id], onDelete: Cascade)
+
+  issuerId String
+  issuer User @relation("Issuer",fields: [issuerId], references: [id], onDelete: Cascade)
+
+  postId String?
+  post Post? @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  type NotificationType
+  read Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  LIKE
+  FOLLOW
+  COMMENT
+}

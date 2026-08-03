@@ -1,6 +1,5 @@
 import { validateRequest } from "@/auth";
-import prisma from "@/lib/prisma";
-import { getPostDataInclude, PostsPage } from "@/lib/types";
+import { getForYouFeed } from "@/lib/recommendations";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest){
@@ -14,29 +13,7 @@ export async function GET(req: NextRequest){
 
         if(!user) return Response.json({error:"Unauthorized"}, {status:401})
 
-        const posts = await prisma.post.findMany({
-            // include:postDataInclude,
-            include: getPostDataInclude(user.id),
-            orderBy:{
-                createdAt:"desc"
-            },
-
-            //added later
-            take: pageSize+1,
-            cursor: cursor ? {id: cursor}: undefined
-            /* 
-            Prisma expects this shape for cursors
-            cursor: { id: "abc123" }
-            doing just cursor: "abc123" will not work
-            */
-        })
-
-        const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
-
-        const data: PostsPage = {
-            posts: posts.slice(0, pageSize), 
-            nextCursor
-        }
+        const data = await getForYouFeed(user.id, cursor, pageSize);
         //if the number of posts is less than the pagesize then all the posts are returned. undefined or null are not returned. arr.slice() works like this when slicing endpoint number exceeds arr.length
         //[1,2,3,4,5,6].slice(0,7) = [1,2,3,4,5,6], it won't add extra null or empty values
 

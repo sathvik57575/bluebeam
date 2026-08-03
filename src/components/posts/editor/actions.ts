@@ -4,6 +4,7 @@ import { validateRequest } from "@/auth"
 import prisma from "@/lib/prisma";
 import { getPostDataInclude } from "@/lib/types";
 import { createPostSchema } from "@/lib/validation";
+import { generateAndStorePostEmbedding } from "@/lib/semantic-search";
 // import { revalidatePath } from "next/cache";
 
 export async function submitPost(input:{
@@ -45,6 +46,9 @@ export async function submitPost(input:{
         // include:postDataInclude
         include: getPostDataInclude(user.id)
     })
+
+    // Embeddings improve search, but a Gemini outage must never delay publishing.
+    void generateAndStorePostEmbedding(newPost.id, newPost.content);
 
     // revalidatePath("/posts") //revalidating the posts page, so that the new post appears without refreshing the page. But we're not using this since our posts are client component, so they will update automatically when the state changes, so we don't need to revalidate the page. Also we will use react query to manage the posts state, so we will just invalidate the query instead of revalidating the page.
 

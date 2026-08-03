@@ -1,11 +1,16 @@
 import { validateRequest } from "@/auth";
-import prisma from "@/lib/prisma";
-import { getPostDataInclude, PostsPage } from "@/lib/types";
+import { hybridSearchPosts } from "@/lib/semantic-search";
+import { PostsPage } from "@/lib/types";
 import { NextRequest } from "next/server";
+
+function withoutMatchType<T extends { matchType: unknown }>({ matchType, ...post }: T): Omit<T, "matchType"> {
+    void matchType;
+    return post;
+}
 
 export async function GET(req: NextRequest){
     try {
-        const cursor = req.nextUrl.searchParams.get("cursor") || undefined;
+        const cursor = req.nextUrl.searchParams.get("cursor");
         
         const pageSize = 6;
 
@@ -16,48 +21,15 @@ export async function GET(req: NextRequest){
         //getting the search query params
         const q = req.nextUrl.searchParams.get("q");
 
-        //making it a string by replacing spaces with "&" so that prisma/postgress can search it, this is how it expects it. Just go to postgress/prisma docs for doubts.
-        const searchQuery = q?.split(" ").join(" & ");
-
-        //we are searching matching words for that query in the username, displayname of the users and also the posts content. So now even if the username/displayname match it will fetch the posts of those users.
-        const posts = await prisma.post.findMany({
-            where:{
-                OR:[
-                    {
-                        content:{
-                            search: searchQuery
-                        }
-                    },
-                    {
-                        user:{
-                            displayName:{
-                                search: searchQuery
-                            }
-                        }
-                    },
-                    {
-                        user:{
-                            username:{
-                                search: searchQuery
-                            }
-                        }
-                    }
-                ]
-            },
-
-            include: getPostDataInclude(user.id),
-            orderBy: {createdAt: "desc"},
-            take: pageSize + 1,
-            cursor: cursor? {id:cursor}: undefined
-
-        })
-
-
-        const nextCursor = posts.length > pageSize ? posts[pageSize].id : null;
+        const results = q ? await hybridSearchPosts(q, user.id) : [];
+        const offset = Math.max(0, Number.parseInt(cursor ?? "0", 10) || 0);
+        const posts = results.slice(offset, offset + pageSize + 1);
+        const nextCursor = posts.length > pageSize ? String(offset + pageSize) : null;
 
  
         const data: PostsPage = {
-            posts: posts.slice(0, pageSize),
+            // Keep the response consumed by the existing UI unchanged.
+            posts: posts.slice(0, pageSize).map(withoutMatchType),
             nextCursor
         }
 

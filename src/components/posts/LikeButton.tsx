@@ -54,6 +54,9 @@ export default function LikeButton({ initialState, postId }: LikeButtonProps) {
         console.log(error);
         toast.error("Something went wrong. Please try again.");
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["post-feed", "recommended"] });
+    },
   });
 
   return (

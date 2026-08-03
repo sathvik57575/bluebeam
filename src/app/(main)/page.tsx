@@ -6,6 +6,7 @@ import { postDataInclude } from "@/lib/types";
 import ForYouFeed from "./ForYouFeed";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import FollowingFeed from "./FollowingFeed";
+import RecommendedFeed from "./RecommendedFeed";
 
 export default function Home() {
 
@@ -48,6 +49,7 @@ export default function Home() {
             <TabsList>
                 <TabsTrigger value="for-you">For you</TabsTrigger>
                 <TabsTrigger value="following">Following</TabsTrigger>
+                <TabsTrigger value="recommended">Recommended</TabsTrigger>
             </TabsList>
 
             <TabsContent value="for-you">
@@ -55,6 +57,9 @@ export default function Home() {
             </TabsContent>
             <TabsContent value="following">
                 <FollowingFeed/>
+            </TabsContent>
+            <TabsContent value="recommended">
+                <RecommendedFeed/>
             </TabsContent>
          </Tabs>
       </div>

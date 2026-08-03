@@ -1,5 +1,6 @@
 import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
+import { invalidateRecommendedFeed } from "@/lib/recommendations";
 import { LikeInfo } from "@/lib/types";
 
 
@@ -128,6 +129,8 @@ export async function POST(req: Request,
             : []),
         ]);
 
+        await invalidateRecommendedFeed(loggedInUser.id);
+
 
         return new Response();
     } catch (error) {
@@ -183,6 +186,8 @@ export async function DELETE(req: Request,
             },
           }),
         ]);
+
+        await invalidateRecommendedFeed(loggedInUser.id);
 
         return new Response();
         

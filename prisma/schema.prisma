@@ -41,6 +41,8 @@ model User {
 
   comments Comment[]
 
+  recommendationCache RecommendationCache?
+
   receivedNotifications Notification[] @relation("Recipient")
   issuedNotifications   Notification[] @relation("Issuer")
 
@@ -176,6 +178,7 @@ model Post {
   id      String @id @default(cuid())
   content String
   userId  String
+  embedding Unsupported("vector(768)")?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -237,8 +240,21 @@ model Like {
   postId String
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
 
+  createdAt DateTime @default(now())
+
   @@unique([userId, postId])
+  @@index([userId, createdAt])
   @@map("likes")
+}
+
+model RecommendationCache {
+  userId String @id
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postIds    Json
+  computedAt DateTime
+
+  @@map("recommendation_cache")
 }
 
 

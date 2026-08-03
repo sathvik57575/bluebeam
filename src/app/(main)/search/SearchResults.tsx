@@ -44,6 +44,7 @@ export default function SearchResults({query}:SearchResultsProps){
       },
       initialPageParam: null as string | null,
       getNextPageParam: (previousPage) => previousPage.nextCursor,
+      gcTime: 0, // Disable garbage collection for this query, so always fresh data is fetched when the query is invalidated. This is important for search results, as we want to always show the latest results for a given query.
     });
 
     

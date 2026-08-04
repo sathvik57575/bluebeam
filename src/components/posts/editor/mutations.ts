@@ -1,7 +1,7 @@
 import { InfiniteData, QueryFilters, useMutation, useQueryClient } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { submitPost } from "./actions";
-import { PostsPage } from "@/lib/types";
+import { PostData, PostsPage } from "@/lib/types";
 import { useSession } from "@/app/(main)/SessionProvider";
 
 
@@ -12,7 +12,16 @@ export function useSubmitPostMutation(){
     const queryClient = useQueryClient();
 
     const mutation = useMutation({
-      mutationFn: submitPost,
+      // mutationFn: submitPost, 
+      //instead of simply submitPost we're writing a manual function which calls submitPost inside it and returns the value. We're doign this because in production nextjs deliberately strips any error messages thrown inside the server action, replacing it with that generic "error occurred in Server Components render" text + a digest. In our app when user types any profane word and tries to submit, then in development a proper error toast message is shown, but in production a generic error message is displayed as shown above. So to fix this, The fix: don't throw from the Server Action for expected, user-facing errors — return a result object instead, and throw on the client side, since client-thrown errors are never touched by this sanitization (it only applies to code executing in the server action context), in the actions.ts file we already wrapped the await moderateText(content) in a try/catch so it throws error, and it returns an object response with success field and err field. and that we will handle that error here in the client side.
+
+      mutationFn: async (input: Parameters<typeof submitPost>[0]) => {
+        const result = await submitPost(input);
+        if("error" in result){
+          throw new Error(result.error); // thrown client-side, not sanitized by nextjs
+        }
+        return result;
+      },
 
       onSuccess: async (newPost) => {
         //this is a simpler way, just re-fetch/invalidate queries, NOTE: order of query keys matters too, we can't just write only post-feed or only for-you or in the wrong order ["for-you", "post-feed"]

@@ -19,7 +19,15 @@ export async function submitComment({
 
   const { content: contentValidated } = createCommentSchema.parse({ content });
 
-  await moderateText(contentValidated);
+
+  try {
+    await moderateText(contentValidated);
+  } catch (err) {
+    return {
+      error: err instanceof Error ? err.message : "Content violates moderation policy. Please remove explicit language and try again."
+    };
+  }
+
 
     /*
       const newComment = await prisma.comment.create({

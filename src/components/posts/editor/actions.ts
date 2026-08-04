@@ -20,7 +20,13 @@ export async function submitPost(input:{
     // const {content} = createPostSchema.parse({content:input});
     const {content, mediaIds} = createPostSchema.parse(input); //just passing the whole input object since the key names are correctly recieved anyway
 
-    await moderateText(content);
+    try {
+      await moderateText(content);
+    } catch (err) {
+      return {
+        error: err instanceof Error ? err.message : "Content violates moderation policy. Please remove explicit language and try again.",
+      };
+    }
 
     const newPost = await prisma.post.create({
         data:{
@@ -84,3 +90,17 @@ export async function submitPost(input:string) {
 }
 
 */
+
+
+/**
+ We did AI content moderation
+ previously it was just 
+ await moderateText(content);
+ later we wrapped it in a try/catch and returned a proper object in case error occurs so we can handle it on the client side.
+ Before we did this try/catch, if the profanity check fails, an error is thrown in this server action file itself, In a server action, if an error is thrown and not caught, Next.js treats it as a server-side failure. That unhandled exception is logged in the terminal and also causes the request to fail. Everything will work fine even in this case(our server won't crash), it just means one request failed, and it continues listening to next request.
+ But one problem is nextjs deliberately strips any error messages thrown inside the server action, replacing it with that generic "error occurred in Server Components render" text + a digest. In our app when user types any profane word and tries to submit, then in development a proper error toast message is shown, but in production a generic error message is displayed as shown above. So to fix this, The fix: don't throw from the Server Action for expected, user-facing errors — return a result object instead, and throw on the client side, since client-thrown errors are never touched by this sanitization (it only applies to code executing in the server action context), in the actions.ts file we already wrapped the await moderateText(content) in a try/catch so it throws error, and it returns an object response with success field(we later removed this success field) and err field. and that we will handle that error here in the client side(mutations.ts file).
+
+ SO in this case no error is displayed in the terminal when we try to submit a profane word since we wrapped "await moderateText(content)" in a try/catch and handled the error and returned an object, so now there is no error(unhandled error) which is thrown in the server action which will cause a request to fail and be logged in the terminal. Now the request will succeed, but the result will be an object with error field which we will handle in the client side(mutations.ts file) and show a proper toast message to the user. The thrown error is now caught inside the server action, so it never bubbles up as an unhandled server exception.
+
+ 
+ */

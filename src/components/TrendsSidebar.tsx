@@ -17,7 +17,7 @@ interface TrendsSidebarProps {
 
 export default function TrendsSidebar({ className }: TrendsSidebarProps) {
   return (
-    <div className={cn("sticky top-21 hidden md:block lg:w-80 w-72 h-fit flex-none space-y-5", className)}>
+    <div className={cn("sticky top-21 hidden md:block lg:w-80 w-72 h-fit flex-none space-y-5 overflow-y-auto  max-h-[calc(100vh-6rem)]", className)}>
       <Suspense fallback={<Loader2 className="animate-spin mx-auto" />}>
         <WhoToFollow />
         <TrendingTopics />

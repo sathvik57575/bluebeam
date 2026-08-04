@@ -46,8 +46,8 @@ export function useSubmitCommentMutation(postId: string){
             toast.success("Comment created")
         },
         onError(error){
-            console.log(error);
-            toast.error("Failed to submit comment. Please try again.")
+            const message = error instanceof Error ? error.message : "Failed to submit comment. Please try again.";
+            toast.error(message)
         }
     })
 

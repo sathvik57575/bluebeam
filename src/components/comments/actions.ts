@@ -4,6 +4,7 @@ import { validateRequest } from "@/auth";
 import prisma from "@/lib/prisma";
 import { getCommentDataInclude, PostData } from "@/lib/types";
 import { createCommentSchema } from "@/lib/validation";
+import { moderateText } from "@/lib/moderation";
 
 export async function submitComment({
   post,
@@ -17,6 +18,8 @@ export async function submitComment({
   if (!user) throw new Error("Unauthorized");
 
   const { content: contentValidated } = createCommentSchema.parse({ content });
+
+  await moderateText(contentValidated);
 
     /*
       const newComment = await prisma.comment.create({

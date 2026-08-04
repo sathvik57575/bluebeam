@@ -89,9 +89,9 @@ export function useSubmitPostMutation(){
       },
 
       onError(error) {
-        console.log(error);
-        toast.error("Failed to post, please try again");
-      },
+        const message = error instanceof Error ? error.message : "Failed to post, please try again.";
+        toast.error(message);
+      }
     });
 
     return mutation;

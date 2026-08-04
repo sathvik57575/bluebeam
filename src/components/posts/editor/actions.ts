@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import { getPostDataInclude } from "@/lib/types";
 import { createPostSchema } from "@/lib/validation";
 import { generateAndStorePostEmbedding } from "@/lib/semantic-search";
+import { moderateText } from "@/lib/moderation";
 // import { revalidatePath } from "next/cache";
 
 export async function submitPost(input:{
@@ -18,6 +19,8 @@ export async function submitPost(input:{
 
     // const {content} = createPostSchema.parse({content:input});
     const {content, mediaIds} = createPostSchema.parse(input); //just passing the whole input object since the key names are correctly recieved anyway
+
+    await moderateText(content);
 
     const newPost = await prisma.post.create({
         data:{
